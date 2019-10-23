@@ -117,8 +117,8 @@ To make this a bit more adaptable to different scenarios, I have included the fo
   
 # Prepare the Script for Execution
 + If the cron executes as another logged-in user, you may need to change relative paths to full-paths. (Note – This has been done already above)
-  + Ex: “~/.panrc” to “/home/<username>/.panrc”
-  + Or: “~/.cloudflare.ini” to /home/<username>/.cloudflare.ini
+  + Ex: “~/.panrc” to “/home/username/.panrc”
+  + Or: “~/.cloudflare.ini” to /home/username/.cloudflare.ini
 + Ensure there are no extensions after the filename. In most cases, only underscores and dashes are supported
 + Ensure the cron is executable
   
