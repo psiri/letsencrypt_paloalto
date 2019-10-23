@@ -6,4 +6,4 @@
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 SHELL=/bin/bash
 
-0 * * * 3,6 root bash /home/USERNAME/pan_certbot >> /var/log/pan_certbot.log 2>&1
+0 0 * * 3,6 root bash /home/USERNAME/pan_certbot >> /var/log/pan_certbot.log 2>&1
