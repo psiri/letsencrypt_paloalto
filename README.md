@@ -141,7 +141,7 @@ To make this a bit more adaptable to different scenarios, I have included the fo
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 SHELL=/bin/bash
 
-0 * * * 3,6 root bash /home/psiri/pan_certbot >> /var/log/pan_certbot.log 2>&1
+0 0 * * 3,6 root bash /home/psiri/pan_certbot >> /var/log/pan_certbot.log 2>&1
 ```
 
 # LetsEncrypt Renewal Limits
