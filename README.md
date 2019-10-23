@@ -213,7 +213,7 @@ commit: success: "Configuration committed successfully"
 ```
 
 You should also be able to check the following locations on the Palo Alto Networks firewall for additional confirmation:
-** Monitor –> Logs –> Configuration **
+**Monitor –> Logs –> Configuration**
 You should see 3-5 operations, depending on whether or not you chose to modify the SSL/TLS service profile(s).  In my setup (PA-850), it takes 7-8 seconds to renew, upload, and commit the configuration (not including actual commit time):
 
 1. A web upload to /config/shared/certificate
