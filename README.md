@@ -135,13 +135,13 @@ To make this a bit more adaptable to different scenarios, I have included the fo
   ```
 2. Insert the following within the /etc/cron.d/pan_certbot file to ensure the cron generates a log file to debug any issues:
   + The following cronjob will run twice weekly (Midnight Weds and Saturday).  To change execution frequency, modify the schedule to meet your needs.
-  + The log file will be stored in /var/log/pan_certbot.log
+  + The log file will be timestamped and stored in /var/log/pan_certbot.log
   + **Change “/home/psiri/pan_certbot” to the full path of the script**
   ```
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 SHELL=/bin/bash
 
-0 0 * * 3,6 root bash /home/psiri/pan_certbot >> /var/log/pan_certbot.log 2>&1
+0 0 * * 3,6 root (/bin/date && /home/psiri/pan_certbot) >> /var/log/pan_certbot.log 2>&1
 ```
 
 # LetsEncrypt Renewal Limits
