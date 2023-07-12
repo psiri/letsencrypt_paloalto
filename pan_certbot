@@ -12,7 +12,7 @@ TEMP_PWD=$(openssl rand -hex 15)
 
 sudo /usr/local/bin/certbot certonly --dns-cloudflare --dns-cloudflare-credentials $CLOUDFLARE_CREDS -d *.$FQDN -n --agree-tos --force-renew
 #Depending on your setup, certbot may not give you separate files for the certificate and chain.  This script expects separate files.
-sudo openssl pkcs12 -export -out letsencrypt_pkcs12.pfx -inkey /etc/letsencrypt/live/$FQDN/privkey.pem -in /etc/letsencrypt/live/$FQDN/cert.pem -certfile /etc/letsencrypt/live/$FQDN/chain.pem -passout pass:$TEMP_PWD
+sudo openssl pkcs12 -export -out letsencrypt_pkcs12.pfx -inkey /etc/letsencrypt/live/$FQDN/privkey.pem -in /etc/letsencrypt/live/$FQDN/cert.pem -certfile /etc/letsencrypt/live/$FQDN/cert.pem -passout pass:$TEMP_PWD
 curl -k --form file=@letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=certificate&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
 curl -k --form file=@letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=private-key&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
 sudo rm letsencrypt_pkcs12.pfx
