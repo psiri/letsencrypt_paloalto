@@ -17,14 +17,18 @@ GenCerts() {
 UploadCerts() {
     #Depending on your setup, certbot may not give you separate files for the certificate and chain.  This script expects separate files.
     sudo openssl pkcs12 -export -out letsencrypt_pkcs12.pfx -inkey /etc/letsencrypt/live/$FQDN/privkey.pem -in /etc/letsencrypt/live/$FQDN/cert.pem -certfile /etc/letsencrypt/live/$FQDN/cert.pem -passout pass:$TEMP_PWD
-    curl -k --form file=@letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=certificate&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
-    curl -k --form file=@letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=private-key&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
-    sudo rm letsencrypt_pkcs12.pfx
-    #If you use a separate SSL/TLS Service Profile for the GlobalProtect Portal and Gateway, uncomment the next line and update the 'GP_PORTAL_TLS_PROFILE' variable with the name of your GlobalProtect Portal's SSL/TLS Service Profile, as it appears in your management GUI.
-    panxapi.py -h $PAN_MGMT -K $API_KEY -S "<certificate>$CERT_NAME</certificate>" "/config/shared/ssl-tls-service-profile/entry[@name='$GP_PORTAL_TLS_PROFILE']"
-    #If you use a separate SSL/TLS Service Profile for the GlobalProtect Portal and Gateway, uncomment the next line and update the 'GP_GW_TLS_PROFILE' variable with the name of your GlobalProtect Gateway's SSL/TLS Service Profile, as it appears in your management GUI. If you use a single SSL/TLS Service Profile for BOTH the Portal and Gateway, you can comment the following line out, or set the value of 'GP_GW_TLS_PROFILE' to the value of 'GP_PORTAL_TLS_PROFILE'
-    panxapi.py -h $PAN_MGMT -K $API_KEY -S "<certificate>$CERT_NAME</certificate>" "/config/shared/ssl-tls-service-profile/entry[@name='$GP_GW_TLS_PROFILE']"
-    panxapi.py -h $PAN_MGMT -K $API_KEY -C '' --sync
+    if [ -e letsencrypt_pkcs12.pfx ]; then
+        curl -k --form file=@letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=certificate&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
+        curl -k --form file=@letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=private-key&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
+        sudo rm letsencrypt_pkcs12.pfx
+        #If you use a separate SSL/TLS Service Profile for the GlobalProtect Portal and Gateway, uncomment the next line and update the 'GP_PORTAL_TLS_PROFILE' variable with the name of your GlobalProtect Portal's SSL/TLS Service Profile, as it appears in your management GUI.
+        panxapi.py -h $PAN_MGMT -K $API_KEY -S "<certificate>$CERT_NAME</certificate>" "/config/shared/ssl-tls-service-profile/entry[@name='$GP_PORTAL_TLS_PROFILE']"
+        #If you use a separate SSL/TLS Service Profile for the GlobalProtect Portal and Gateway, uncomment the next line and update the 'GP_GW_TLS_PROFILE' variable with the name of your GlobalProtect Gateway's SSL/TLS Service Profile, as it appears in your management GUI. If you use a single SSL/TLS Service Profile for BOTH the Portal and Gateway, you can comment the following line out, or set the value of 'GP_GW_TLS_PROFILE' to the value of 'GP_PORTAL_TLS_PROFILE'
+        panxapi.py -h $PAN_MGMT -K $API_KEY -S "<certificate>$CERT_NAME</certificate>" "/config/shared/ssl-tls-service-profile/entry[@name='$GP_GW_TLS_PROFILE']"
+        panxapi.py -h $PAN_MGMT -K $API_KEY -C '' --sync
+    else
+        echo "Error! .pfx file not found!"
+    fi
 }
 
 GenCerts
