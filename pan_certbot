@@ -18,18 +18,63 @@ UploadCerts() {
     #Depending on your setup, certbot may not give you separate files for the certificate and chain.  This script expects separate files.
     sudo openssl pkcs12 -export -out letsencrypt_pkcs12.pfx -inkey /etc/letsencrypt/live/$FQDN/privkey.pem -in /etc/letsencrypt/live/$FQDN/cert.pem -certfile /etc/letsencrypt/live/$FQDN/cert.pem -passout pass:$TEMP_PWD
     if [ -e letsencrypt_pkcs12.pfx ]; then
+        echo "...Uploading certificate: $CERT_NAME"
         curl -k --form file=@letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=certificate&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
         curl -k --form file=@letsencrypt_pkcs12.pfx "https://$PAN_MGMT/api/?type=import&category=private-key&certificate-name=$CERT_NAME&format=pkcs12&passphrase=$TEMP_PWD&key=$API_KEY" && echo " "
         sudo rm letsencrypt_pkcs12.pfx
         #If you use a separate SSL/TLS Service Profile for the GlobalProtect Portal and Gateway, uncomment the next line and update the 'GP_PORTAL_TLS_PROFILE' variable with the name of your GlobalProtect Portal's SSL/TLS Service Profile, as it appears in your management GUI.
+        echo "...Changing SSL-TLS profiles"
         panxapi.py -h $PAN_MGMT -K $API_KEY -S "<certificate>$CERT_NAME</certificate>" "/config/shared/ssl-tls-service-profile/entry[@name='$GP_PORTAL_TLS_PROFILE']"
         #If you use a separate SSL/TLS Service Profile for the GlobalProtect Portal and Gateway, uncomment the next line and update the 'GP_GW_TLS_PROFILE' variable with the name of your GlobalProtect Gateway's SSL/TLS Service Profile, as it appears in your management GUI. If you use a single SSL/TLS Service Profile for BOTH the Portal and Gateway, you can comment the following line out, or set the value of 'GP_GW_TLS_PROFILE' to the value of 'GP_PORTAL_TLS_PROFILE'
         panxapi.py -h $PAN_MGMT -K $API_KEY -S "<certificate>$CERT_NAME</certificate>" "/config/shared/ssl-tls-service-profile/entry[@name='$GP_GW_TLS_PROFILE']"
+        echo "...Initiating commit"
         panxapi.py -h $PAN_MGMT -K $API_KEY -C '' --sync
     else
         echo "Error! .pfx file not found!"
     fi
 }
 
-GenCerts
-UploadCerts
+
+# Checks if CERT_NAME is present in Palo Alto
+PACERT=$(curl -k -G "https://$PAN_MGMT/api/" --data-urlencode "type=config" --data-urlencode "action=get" --data-urlencode "xpath=/config/shared/certificate/entry[@name='$CERT_NAME']" --data-urlencode "key=$API_KEY")
+
+if [[ "$PACERT" == *'status="success" code="19"'* ]]; then
+    # A certificate with CERT_NAME value is present, the code bellow will check if the expiry date matches with local certificate
+    PAEXPIRYDATE=$(echo $PACERT | awk -F'<not-valid-after[^>]*>|</not-valid-after>' '{print $2}')
+    echo "Palo Alto $CERT_NAME expiry date: $PAEXPIRYDATE"
+    if [ -e /etc/letsencrypt/live/$FQDN/cert.pem ]; then
+        # Extracts expiry date from local certificate and checks against PA
+        FILEEXPIRYDATE=$(openssl x509 -enddate -noout -in /etc/letsencrypt/live/$FQDN/cert.pem | awk -F'=' '{print $2}')
+        echo "File expiry date: $FILEEXPIRYDATE"
+        if [[ -n "$PAEXPIRYDATE" && -n "$FILEEXPIRYDATE" ]]; then
+            if [[ "$PAEXPIRYDATE" == "$FILEEXPIRYDATE" ]]; then
+               echo "Local certificate matches with Palo Alto certificate, nothing to do."
+            else
+                # If the expiry dates of both certificates don't match, it will try to renew and upload the new certificate
+                GenCerts
+                UploadCerts
+            fi
+        else
+            echo "Error: one of the expiry values is empty, please check your settings!"
+        fi
+    else
+        # If the local certificate for the FQDN doesn't exist, it will try to renew and load the new certificate
+        echo "Certificate for $FQDN not found, generating new certificate."
+        GenCerts
+        UploadCerts
+    fi
+elif [[ "$PACERT" == *'status="success" code="7"'* ]]; then
+    echo "Certificate with name $CERT_NAME is not present in Palo Alto"
+    if [ -e /etc/letsencrypt/live/$FQDN/cert.pem ]; then
+        # If the local certificate for the FQDN exists but isn't present on Palo Alto, it will try to load the certificate
+        echo "Certificate exists locally, uploading to Palo Alto."
+        UpdateCerts
+    else
+        # If the certificate for FQDN doesn't exist both locally and in Palo Alto, it will try to renew and load the new certificate
+        echo "Certificate for $FQDN not found! generating new certificate!"
+        GenCerts
+        UploadCerts
+    fi
+else
+    echo "API Error: $PACERT"
+fi
