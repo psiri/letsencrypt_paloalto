@@ -34,6 +34,9 @@ UploadCerts() {
     fi
 }
 
+# Initial attempt to renew the certificate
+GenCerts
+
 # Checks if CERT_NAME is present in Palo Alto
 PACERT=$(curl -k -G "https://$PAN_MGMT/api/" --data-urlencode "type=config" --data-urlencode "action=get" --data-urlencode "xpath=/config/shared/certificate/entry[@name='$CERT_NAME']" --data-urlencode "key=$API_KEY")
 
@@ -49,12 +52,11 @@ if [[ "$PACERT" == *'status="success" code="19"'* ]]; then
             if [[ "$PAEXPIRYDATE" == "$FILEEXPIRYDATE" ]]; then
                echo "Local certificate matches with Palo Alto certificate, nothing to do."
             else
-                # If the expiry dates of both certificates don't match, it will try to renew and upload the new certificate
-                GenCerts
+                # If the expiry date of both certificates don't match, it will try to upload the new certificate
                 UploadCerts
             fi
         else
-            echo "Error: one of the expiry values strings is empty, please check your settings!"
+            echo "Error: one of the expiry values is empty, please check your settings!"
         fi
     else
         # If the local certificate for the FQDN doesn't exist, it will try to renew and load the new certificate
