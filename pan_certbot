@@ -11,7 +11,7 @@ TEMP_PWD=$(openssl rand -hex 15)
 #Requirements: openssl, pan-python, certbot
 
 GenCerts() {
-    sudo /usr/local/bin/certbot certonly --dns-cloudflare --dns-cloudflare-credentials $CLOUDFLARE_CREDS -d *.$FQDN -n --agree-tos
+    sudo /usr/local/bin/certbot certonly --dns-cloudflare --dns-cloudflare-credentials $CLOUDFLARE_CREDS -d *.$FQDN -n --agree-tos --no-eff-email --quiet
 }
 
 UploadCerts() {
