@@ -1,5 +1,5 @@
 #!/bin/bash
-CLOUDFLARE_CREDS=<FULL_PATH_TO>/cloudflare.ini
+RFC2136FILE=<FULL_PATH_TO>/rfc2136.ini
 PAN_MGMT=<FW_MGMT_FQDN_OR_IP>
 FQDN=<CERTIFICATE_FQDN(s)>
 EMAIL=<EMAIL_ADDRESS>
@@ -11,7 +11,7 @@ TEMP_PWD=$(openssl rand -hex 15)
 #Requirements: openssl, pan-python, certbot
 
 GenCerts() {
-    sudo /usr/local/bin/certbot certonly --dns-cloudflare --dns-cloudflare-credentials $CLOUDFLARE_CREDS -d *.$FQDN -n --agree-tos --no-eff-email --quiet
+    sudo /usr/local/bin/certbot certonly --dns-rfc2136 --dns-rfc2136-credentials $RFC2136FILE -d *.$FQDN --email $EMAIL --agree-tos --no-eff-email --quiet
 }
 
 UploadCerts() {

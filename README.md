@@ -66,6 +66,27 @@ To setup certbot initially, issue the following command.  This command will gene
 cloudflare-credentials /home/psiri/.cloudflare.ini -d *.bitbodyguard.com --preferred-challenges dns-01
 ```
 
+ # Initial Configuration - RFC 2136
+If your DNS server has RFC 2136 configured, you can use the rfc2136 variant of the script to generate certificates.
+  ```
+  sudo apt install certbot python3-certbot-dns-rfc2136
+  ```
+rfc2136.ini configuration example:
+```
+# Target DNS server (IPv4 or IPv6 address, not a hostname)
+dns_rfc2136_server = <YOUR_DNS_SERVER_IP>
+# Target DNS port
+dns_rfc2136_port = 53
+# TSIG key name
+dns_rfc2136_name = <KEY_NAME>
+# TSIG key secret
+dns_rfc2136_secret = <KEY_SECRET>
+# TSIG key algorithm
+dns_rfc2136_algorithm = HMAC-SHA512
+# TSIG sign SOA query (optional, default: false)
+dns_rfc2136_sign_query = false
+```
+
 # Initial Configuration - Standalone
 ### If you are not using CloudFlare DNS for authentication, you can optionally use the standalone method to perform initial certbot setup:
 
